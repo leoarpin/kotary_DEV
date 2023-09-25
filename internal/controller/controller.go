@@ -122,8 +122,10 @@ func NewController(
 	resourceQuotaClaimInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueResourceQuotaClaim,
 		UpdateFunc: func(old, new interface{}) {
+			klog.Infof("New RequestQuotaClaim appeared")
 			newQuotaClaim := new.(*cagipv1.ResourceQuotaClaim)
 			oldQuotaClaim := old.(*cagipv1.ResourceQuotaClaim)
+			//IMO c'est pas nécéssaire de check si c'est le même. Si le mec veux reesayer le même quotaclaim pour X ou Y raison il faut lui laisser faire
 			if newQuotaClaim.ResourceVersion == oldQuotaClaim.ResourceVersion {
 				return
 			}
@@ -134,9 +136,26 @@ func NewController(
 	namespaceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueNamespace,
 		UpdateFunc: func(old, new interface{}) {
+			klog.Infof("Informer namespace is involved")
 			controller.enqueueNamespace(new)
 		},
 	})
+
+	podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(old, new interface{}) {
+			klog.Infof("Pods informer is invoqued")
+		},
+	})
+	/*
+		// Check if any change occurs on pods that changes TotalRequest, if so refresh all pending request
+		podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+			AddFunc: controller.enqueueResourceQuotaClaim,
+			UpdateFunc: func(old, new interface{}) {
+				pods, err := controller.podsLister.Pods(new.namespace).List(utils.DefaultLabelSelector())
+				pods = utils.FilterRunningPods(pods)
+				oldResourceUsage := old.v1Core.TotalRequestNS.List
+			},
+		}) */
 
 	return controller
 }

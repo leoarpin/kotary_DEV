@@ -21,6 +21,9 @@ import (
 
 // Handle claims from the workqueue
 func (c *Controller) syncHandlerClaim(key string) error {
+
+	klog.Infof("Starting synchandlerclaim function")
+
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -62,6 +65,7 @@ func (c *Controller) syncHandlerClaim(key string) error {
 		if isDownscale := isDownscaleQuota(claim, managedQuota); isDownscale {
 			if msg := canDownscaleQuota(claim, utils.TotalRequestNS(pods)); msg != utils.EmptyMsg {
 				err = c.claimPending(claim, msg)
+				//ADD event listener sur le usage CPU/MEMORY pour pouvoir passerde pending a accepted?
 				return err
 			}
 		}
@@ -161,6 +165,7 @@ func (c *Controller) claimPending(claim *cagipv1.ResourceQuotaClaim, msg string)
 	// Update ResourceQuotaClaim Status to Rejected Phase
 	_, err = c.updateResourceQuotaClaimStatus(claim, cagipv1.PhasePending, msg)
 	utils.ClaimCounter.WithLabelValues("pending").Inc()
+	klog.Infof("================= Claim Pending =================")
 	return
 }
 
