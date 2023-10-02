@@ -21,9 +21,6 @@ import (
 
 // Handle claims from the workqueue
 func (c *Controller) syncHandlerClaim(key string) error {
-
-	klog.Infof("Starting synchandlerclaim function")
-
 	// Convert the namespace/name string into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -65,7 +62,6 @@ func (c *Controller) syncHandlerClaim(key string) error {
 		if isDownscale := isDownscaleQuota(claim, managedQuota); isDownscale {
 			if msg := canDownscaleQuota(claim, utils.TotalRequestNS(pods)); msg != utils.EmptyMsg {
 				err = c.claimPending(claim, msg)
-				//ADD event listener sur le usage CPU/MEMORY pour pouvoir passerde pending a accepted?
 				return err
 			}
 		}
@@ -113,6 +109,7 @@ func (c *Controller) syncHandlerClaim(key string) error {
 	}
 
 	utils.ClaimCounter.WithLabelValues("success").Inc()
+	klog.Infof("-- RequestQuotaClaim '%s' ACCEPTED --", claim.Name)
 
 	// Everything went well
 	return nil
@@ -150,6 +147,7 @@ func (c *Controller) updateResourceQuotaClaimStatus(claim *cagipv1.ResourceQuota
 
 // Update claim phase to Rejected with a msg
 func (c *Controller) claimRejected(claim *cagipv1.ResourceQuotaClaim, msg string) (err error) {
+	klog.Infof("-- RequestQuotaClaim '%s' set to REJECTED --", claim.Name)
 	// Notify via an event
 	c.recorder.Event(claim, v1Core.EventTypeWarning, cagipv1.PhaseRejected, msg)
 	// Update ResourceQuotaClaim Status to Rejected Phase
@@ -160,12 +158,12 @@ func (c *Controller) claimRejected(claim *cagipv1.ResourceQuotaClaim, msg string
 
 // Update claim phase to Pending with a msg
 func (c *Controller) claimPending(claim *cagipv1.ResourceQuotaClaim, msg string) (err error) {
+	klog.Infof("-- RequestQuotaClaim '%s' set to PENDING --", claim.Name)
 	// Notify via an event
 	c.recorder.Event(claim, v1Core.EventTypeWarning, cagipv1.PhasePending, msg)
 	// Update ResourceQuotaClaim Status to Rejected Phase
 	_, err = c.updateResourceQuotaClaimStatus(claim, cagipv1.PhasePending, msg)
 	utils.ClaimCounter.WithLabelValues("pending").Inc()
-	klog.Infof("================= Claim Pending =================")
 	return
 }
 
