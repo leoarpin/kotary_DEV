@@ -122,7 +122,6 @@ func NewController(
 	resourceQuotaClaimInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueResourceQuotaClaim,
 		UpdateFunc: func(old, new interface{}) {
-			klog.Infof("============= RequestQuotaClaim informer is invoqued =============")
 			newQuotaClaim := new.(*cagipv1.ResourceQuotaClaim)
 			oldQuotaClaim := old.(*cagipv1.ResourceQuotaClaim)
 			if newQuotaClaim.ResourceVersion == oldQuotaClaim.ResourceVersion {
@@ -135,7 +134,6 @@ func NewController(
 	namespaceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueNamespace,
 		UpdateFunc: func(old, new interface{}) {
-			klog.Infof("============= Namespace Informer is invoqued =============")
 			controller.enqueueNamespace(new)
 		},
 	})
@@ -143,7 +141,6 @@ func NewController(
 	//Set up an event handler for pod deletions to handle changes in Resource Used
 	podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: func(obj interface{}) {
-			klog.Infof("============= Pods informer is invoqued (delete) =============")
 			controller.handlePod(obj)
 		},
 	})
