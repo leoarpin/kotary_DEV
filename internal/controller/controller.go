@@ -410,7 +410,7 @@ func (c *Controller) handlePod(obj interface{}) {
 	}
 
 	//iterate through the list and enqueue claims to be treated
-	for _, claim := range QuotaClaims {
+	for _, claim := range quotaClaims {
 		notReject := claim.Status.Phase != cagipv1.PhaseRejected
 		notAccepted := claim.Status.Phase != cagipv1.PhaseAccepted
 		if notReject && notAccepted {
