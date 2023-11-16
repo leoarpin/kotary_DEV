@@ -2,7 +2,7 @@ name: test
 
 on:
   push:
-    branches: [ master ]
+    branches: [ temporary-testing ]
   pull_request:
     branches: [ master ]
 
