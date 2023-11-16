@@ -109,7 +109,7 @@ func (c *Controller) syncHandlerClaim(key string) error {
 	}
 
 	utils.ClaimCounter.WithLabelValues("success").Inc()
-	klog.Infof("-- RequestQuotaClaim '%s' ACCEPTED --", claim.Name)
+	klog.Infof("< RequestQuotaClaim '%s' ACCEPTED >", claim.Name)
 
 	// Everything went well
 	return nil
@@ -147,7 +147,7 @@ func (c *Controller) updateResourceQuotaClaimStatus(claim *cagipv1.ResourceQuota
 
 // Update claim phase to Rejected with a msg
 func (c *Controller) claimRejected(claim *cagipv1.ResourceQuotaClaim, msg string) (err error) {
-	klog.Infof("-- RequestQuotaClaim '%s' set to REJECTED --", claim.Name)
+	klog.Infof("< RequestQuotaClaim '%s' set to REJECTED >", claim.Name)
 	// Notify via an event
 	c.recorder.Event(claim, v1Core.EventTypeWarning, cagipv1.PhaseRejected, msg)
 	// Update ResourceQuotaClaim Status to Rejected Phase
@@ -158,7 +158,7 @@ func (c *Controller) claimRejected(claim *cagipv1.ResourceQuotaClaim, msg string
 
 // Update claim phase to Pending with a msg
 func (c *Controller) claimPending(claim *cagipv1.ResourceQuotaClaim, msg string) (err error) {
-	klog.Infof("-- RequestQuotaClaim '%s' set to PENDING --", claim.Name)
+	klog.Infof("< RequestQuotaClaim '%s' set to PENDING >", claim.Name)
 	// Notify via an event
 	c.recorder.Event(claim, v1Core.EventTypeWarning, cagipv1.PhasePending, msg)
 	// Update ResourceQuotaClaim Status to Rejected Phase
