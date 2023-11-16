@@ -125,6 +125,7 @@ func NewController(
 			klog.Infof("============= RequestQuotaClaim informer is invoqued =============")
 			newQuotaClaim := new.(*cagipv1.ResourceQuotaClaim)
 			oldQuotaClaim := old.(*cagipv1.ResourceQuotaClaim)
+			//IMO c'est pas nécéssaire de check si c'est le même. Si le mec veux re-esayer le même quotaclaim pour X ou Y raison il faut lui laisser faire
 			if newQuotaClaim.ResourceVersion == oldQuotaClaim.ResourceVersion {
 				return
 			}
@@ -137,6 +138,17 @@ func NewController(
 		UpdateFunc: func(old, new interface{}) {
 			klog.Infof("============= Namespace Informer is invoqued =============")
 			controller.enqueueNamespace(new)
+		},
+	})
+	podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		/*UpdateFunc: func(old, new interface{}) {
+			klog.Infof("============= Pods informer is invoqued (update) =============")
+			controller.handlePod(new)
+			//klog.Infof("DONE")
+		},*/
+		DeleteFunc: func(obj interface{}) {
+			klog.Infof("============= Pods informer is invoqued (delete) =============")
+			controller.handlePod(obj)
 		},
 	})
 
@@ -394,9 +406,9 @@ func (c *Controller) handlePod(obj interface{}) {
 		klog.Infof("Recovered deleted object '%s' from tombstone", object.GetName())
 	}
 	//retrieve the namespace of the pod
-	podNamespace := object.GetNamespace()
+	Pod_Namespace := object.GetNamespace()
 
-	klog.Infof("Processing pod: %s (%s)", object.GetName(), podNamespace)
+	klog.Infof("Processing pod: %s (%s)", object.GetName(), Pod_Namespace)
 
 	// Empty selector
 	selector, _ := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{})
@@ -404,12 +416,14 @@ func (c *Controller) handlePod(obj interface{}) {
 	//retrieve the list of current quotaclaims in the namespace
 	quotaClaims, err := c.resourceQuotaClaimLister.ResourceQuotaClaims(podNamespace).List(selector)
 
+
 	if err != nil {
 		klog.Infof("error while getting quotaclaims: %s", err)
 		return
 	}
 
 	//iterate through the list and enqueue claims to be treated
+
 	for _, claim := range quotaClaims {
 		notReject := claim.Status.Phase != cagipv1.PhaseRejected
 		notAccepted := claim.Status.Phase != cagipv1.PhaseAccepted
