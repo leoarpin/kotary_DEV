@@ -49,8 +49,7 @@ jobs:
       - name: Edit kotary deployement
         run: |
           version=${{ matrix.kubernetes }}
-          find artifacts/deployment.yml -type f -exec sed -i -E "s/cagip\/kotary:v[0-9.]+/ci\/kotary:$version/g" {} \;
-          find artifacts/deployment.yml -type f -exec sed -i -E "s/Always/Never/g" {} \;
+          sed -i -E "s/cagip\/kotary:v[0-9.]+/ci\/kotary:$version/g" -E "s/Always/Never/g" artifacts/crd.yml;
           cat artifacts/deployment.yml
 
       - name: run tests
