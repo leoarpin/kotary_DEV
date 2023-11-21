@@ -49,7 +49,7 @@ jobs:
       - name: Edit kotary deployement
         run: |
           version=${{ matrix.kubernetes }}
-          sed -i -E "s/cagip\/kotary:v[0-9.]+/ci\/kotary:$version/g" -E "s/Always/Never/g" artifacts/crd.yml;
+          sed -i -E -e "s/cagip\/kotary:v[0-9.]+/ci\/kotary:$version/g" artifacts/crd.yml -e "s/Always/Never/g" artifacts/crd.yml;
           cat artifacts/deployment.yml
 
       - name: run tests
