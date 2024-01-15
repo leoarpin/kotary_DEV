@@ -32,7 +32,7 @@
 # @author: Léo ARPIN (ty for reading :D )
 #
 
-set -eo pipefail
+set -e
 
 # Bash colors for a more enjoyable script
 RED='\033[0;31m'
