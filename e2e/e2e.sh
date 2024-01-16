@@ -77,8 +77,8 @@ echo -e "\\n${BLUE}====== Starting Tests ======${NC}\\n"
 
 #Trying to apply a rqc and verify that the claim is accepted (an accepted claim is deleted from the queue so it does not return anything) 
 kubectl apply -f $ROOT/e2e/KotaryService/QuotaClaim.yaml -n $NS && sleep 3
-kubectl get $QUOTACLAIM -n $NS -o=json >> temp.json #get the claim 
-phase=$(jq ' .items[].status.phase' test.json) #get the status of the claim if the claim has been accepted $phase will be empty
+kubectl get $QUOTACLAIM -n $NS -o=json > temp.json #get the claim 
+phase=$(jq ' .items[].status.phase' temp.json) #get the status of the claim if the claim has been accepted $phase will be empty
 if [  "$phase" != "" ]; #if the phase isn't empty, then it is an error
  then echo -e "\\n${RED}FAILLED! error durring Claim test: the Claim is $phase. Should be accepted ${NC}" && exit 1 ; fi
 
@@ -105,8 +105,8 @@ if kubectl apply -f $ROOT/e2e/KindConfig/pod5.yml -n $NS ; # if the command does
 # verify that the claim is accepted (nothing should appear in the 'status' field)
 echo -e "\\n ${PURPLE}-- Scale UP --${NC}"
 kubectl apply -f $ROOT/e2e/KotaryService/QuotaClaimUp.yaml -n $NS && sleep 3 #apply the new rqc
-kubectl get $QUOTACLAIM -n $NS -o=json >> temp.json #get the claim 
-phase=$(jq ' .items[].status.phase' test.json) #get the status of the claim if the claim has been accepted $phase will be empty
+kubectl get $QUOTACLAIM -n $NS -o=json > temp.json #get the claim 
+phase=$(jq ' .items[].status.phase' temp.json) #get the status of the claim if the claim has been accepted $phase will be empty
 if [  "$phase" != "" ]; #if the phase isn't empty, then it is an error
  then  echo -e "\\n${RED}FAILLED! error durring Scale UP: the Claim is $phase ${NC}\\n" && kubectl get $QUOTACLAIM -n $NS  && exit 1 ; fi
  echo -e "${GREEN} -- OK --${NC}\\n"
@@ -116,9 +116,9 @@ if [  "$phase" != "" ]; #if the phase isn't empty, then it is an error
 # assert that the rqc is rejected
 echo -e "\\n ${PURPLE}-- Scale UP(to big) --${NC}"
 kubectl apply -f $ROOT/e2e/KotaryService/QuotaClaimToBig.yaml -n $NS && sleep 3
-kubectl get $QUOTACLAIM -n $NS -o=json >> temp.json
-phase=$(jq ' .items[].status.phase' test.json)
-if [  "$phase" != "REJECTED" ]; #The claim MUST be rejected, else it is an error
+kubectl get $QUOTACLAIM -n $NS -o=json > temp.json
+phase=$(jq ' .items[].status.phase' temp.json)
+if [  "$phase" != "\"REJECTED\"" ]; #The claim MUST be rejected, else it is an error
  then echo -e "\\n${RED}FAILLED! error durring Scale UP(to big): the Claim has not been rejected${NC}" && kubectl get $QUOTACLAIM -n $NS  && exit 1 ; fi
  echo -e "${GREEN} -- OK --${NC}\\n" && sleep 3
 
@@ -127,10 +127,11 @@ if [  "$phase" != "REJECTED" ]; #The claim MUST be rejected, else it is an error
 # assert that the rqc is set to pending
 echo -e "\\n ${PURPLE}-- Scale Down (under what is curently used --> PENDING) --${NC}"
 kubectl apply -f $ROOT/e2e/KotaryService/QuotaClaimPending.yaml -n $NS && sleep 3
-kubectl get $QUOTACLAIM -n $NS -o=json >> temp.json
-phase=$(jq ' .items[].status.phase' test.json)
-if [  "$phase" != "PENDING" ]; #The claim MUST be pending, else it is an error
- then echo -e "\\n${RED}FAILLED! error durring pending test: the Claim is not set to PENDING${NC}" && kubectl get resourcequota -n $NS && kubectl get $QUOTACLAIM -n $NS && exit 1 ; fi
+kubectl get $QUOTACLAIM -n $NS -o=json > temp.json
+phase=$(jq ' .items[].status.phase' temp.json)
+echo $phase
+if [  "$phase" != "\"PENDING\"" ]; #The claim MUST be pending, else it is an error
+ then echo -e "\\n${RED}FAILLED! error durring pending test: the Claim is not set to PENDING${NC}" && kubectl get $QUOTACLAIM -n $NS && exit 1 ; fi
  echo -e "${GREEN} -- OK --${NC}\\n"
 
 # Reduce the current usage of cpu and memory by deleting a pod
@@ -138,8 +139,8 @@ echo -e "\\n ${PURPLE}-- Delete pod-4: the pending claim should now be accepted 
 kubectl delete pod -n $NS podtest-4 && sleep 3
 
 # assert that, after deletion of the pod, the 'pending' claim is now accepted
-kubectl get $QUOTACLAIM -n $NS -o=json >> temp.json
-phase=$(jq ' .items[].status.phase' test.json)
+kubectl get $QUOTACLAIM -n $NS -o=json > temp.json
+phase=$(jq ' .items[].status.phase' temp.json)
 if [  "$phase" != "" ]; #The status must be empty because the claim should now be accepted. (remember: empty=accepted)
  then echo -e "\\n${RED}FAILLED! error durring pending test: the PENDING Claim is not accepted after resources are updated${NC}" && kubectl get $QUOTACLAIM -n $NS && exit 1; fi
 kubectl apply -f $ROOT/e2e/KotaryService/QuotaClaim.yaml -n $NS  && sleep 3
